@@ -40,7 +40,7 @@ public class CategoryRepository {
                     max = categoryMap.get(i).getSeq();}
             }
         }
-        return 3;
+        return max;
     }
 
     public void save(Category category1) {
