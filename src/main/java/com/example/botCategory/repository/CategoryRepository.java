@@ -16,7 +16,7 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     CharSequence findAllByParent(int level);
 
     @Query(nativeQuery = true, value = "SELECT parent FROM сategoryes WHERE id = :level")
-    String findPreviousLevel(int level);
+    Optional<String> findPreviousLevel(int level);
     @Query(nativeQuery = true, value = "SELECT seq FROM сategoryes WHERE parent = :level AND MAX(seq)")
     Optional<Integer> findByParentAndMaxSeg(int level);
     @Query(nativeQuery = true, value = "SELECT * FROM сategoryes WHERE parent = :level AND seq = :id")
