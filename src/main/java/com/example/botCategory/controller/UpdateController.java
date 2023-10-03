@@ -6,8 +6,10 @@ import com.example.botCategory.model.Category;
 import com.example.botCategory.model.UserState;
 import com.example.botCategory.repository.CategoryRepository;
 import com.example.botCategory.service.CategoryService;
+import com.example.botCategory.service.UpdateProducer;
 import com.example.botCategory.service.UserService;
 import com.example.botCategory.utils.MessageUtils;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class UpdateController {
     private CategoryService categoryService;
     private UserService userService;
     private CategoryRepository categoryRepository;
+    private UpdateProducer updateProducer;
 
     public UpdateController(@Lazy TelegramBot telegramBot, MessageUtils messageUtils,
                             UserState userState, CategoryService categoryService, UserService userService) {
@@ -87,18 +90,21 @@ public class UpdateController {
     }
 
     private void processPhotoMessage(Update update) {
-//        updateProducer.produce(PHOTO_MESSAGE_UPDATE,update);
-//        setFileIsReceivedView(update);
+        updateProducer.produce(PHOTO_MESSAGE_UPDATE,update);
+        setFileIsReceivedView(update);
     }
     private void processDocMessage(Update update) {
-//        updateProducer.produce(DDC_MESSAGE_UPDATE,update);
-//        setFileIsReceivedView(update);
+        updateProducer.produce(DDC_MESSAGE_UPDATE,update);
+        setFileIsReceivedView(update);
     }
     private void processTextMessage(Update update) {
         String message = update.getMessage().getText();
         UserState userState = new UserState();
         userState =  userService.getUserState(update.getMessage().getChatId());
         String last_sction =userState.getLastAction();
+        if (last_sction == null) {
+            return;
+        }
         System.out.println(last_sction);
         Integer level = userState.getLevel();
         switch (last_sction) {
@@ -151,9 +157,9 @@ public class UpdateController {
 
     private void greatCategory(Integer level, String message,Update update) {
         System.out.println("caregory great");
-        //categoryService.greatCategory(level,message);
+        categoryService.greatCategory(level,message);
         telegramBot.sendAnswerTextMessage(update.getMessage().getChatId(),
-                categoryService.greatCategory(level,message));
+                categoryService.getCategoryPreviousLevel(level));
 
     }
 

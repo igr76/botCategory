@@ -3,6 +3,8 @@ package com.example.botCategory.controller;
 import com.example.botCategory.model.UserState;
 import com.example.botCategory.service.CategoryService;
 import com.example.botCategory.service.UserService;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;

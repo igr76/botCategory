@@ -1,12 +1,11 @@
 package com.example.botCategory.model;
 
+import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+
+
 /**    Сущность дерева категорий     */
 @Getter
 @Setter
@@ -14,14 +13,16 @@ import javax.persistence.Id;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-@Component
+@Entity
+@Table(name = "сategoryes")
 public class Category {
     /**    Идентификатор узла     */
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     /**    номер родительского узла     */
 
-    private int parent_node_id;
+    private int parent;
     /**    номер наследника     */
 
     private int seq;
