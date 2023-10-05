@@ -2,6 +2,7 @@ package com.example.botCategory.controller;
 
 
 
+import com.example.botCategory.exception.ElemNotFound;
 import com.example.botCategory.model.Category;
 import com.example.botCategory.model.UserState;
 import com.example.botCategory.repository.CategoryRepository;
@@ -42,9 +43,6 @@ public class UpdateController {
         this.userService = userService;
     }
 
-//        public void registerBot(TelegramBot telegramBot) {
-//        this.telegramBot = telegramBot;
-//    }
 
 //    private void setUnssupportedMessageTipeView(Update update) {
 //        var sendMessage = messageUtils.generateSendMessageWithText(update,
@@ -105,7 +103,6 @@ public class UpdateController {
         if (last_sction == null) {
             return;
         }
-        System.out.println(last_sction);
         Integer level = userState.getLevel();
         switch (last_sction) {
             case GREAT -> greatCategory(level,message,update);
@@ -119,7 +116,7 @@ public class UpdateController {
     private void nextCategory(Integer level, String message,Update update) {
         try {
             int value = Integer.parseInt(message);
-            Category category = categoryRepository.findByParentAndSeg(level,value);
+            Category category = categoryRepository.findByParentAndSeg(level,value).orElseThrow(ElemNotFound::new);
            String text = categoryService.getCategoryLevel(category.getId());
             telegramBot.sendAnswerTextMessage(update.getMessage().getChatId(),
                     text);
@@ -156,7 +153,6 @@ public class UpdateController {
     }
 
     private void greatCategory(Integer level, String message,Update update) {
-        System.out.println("caregory great");
         categoryService.greatCategory(level,message);
         telegramBot.sendAnswerTextMessage(update.getMessage().getChatId(),
                 categoryService.getCategoryPreviousLevel(level));

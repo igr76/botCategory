@@ -19,17 +19,18 @@ public class Category {
     /**    Идентификатор узла     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Integer id;
     /**    номер родительского узла     */
-
+    @Column(name = "parent")
     private int parent;
     /**    номер наследника     */
-
+    @Column(name = "seq")
     private int seq;
     /**    Имя узла     */
-
+    @Column(name = "name")
     private String name;
     /**    Содержание узла     */
-
+    @Column(name = "filling")
     private String filling;
 }

@@ -42,22 +42,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     public    String LAST_ACTION ;
     public    Integer level =1;
 
-    //    public TelegramBot(UpdateController updateController) {
-//        this.updateController = updateController;
-//        List<BotCommand> listOfCommands = new ArrayList<>();
-//        listOfCommands.add(new BotCommand("/previous", "get a welcome message"));
-//        listOfCommands.add(new BotCommand("/next", "get a random joke"));
-//        try {
-//            this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
-//        } catch (TelegramApiException e) {
-//            log.error(Arrays.toString(e.getStackTrace()));
-//        }
-//    }
-//    @PostConstruct
-//    public void init() {
-//        log.info("init");
-//        updateController.registerBot(this);
-//    }
     @EventListener({ContextRefreshedEvent.class})
     public void init() throws TelegramApiException {
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
@@ -74,12 +58,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             // Set variables
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            System.out.println(level+ "0");
             if (userService.getUserState(chatId) == null) {
                 level = 1; UserState userState = new UserState(); userState.setId(chatId);userState.setLevel(level);
                 userService.updateUserState(userState,chatId);
             }else    level = userService.getLevelUserState(chatId);
-            System.out.println(level+"1");
             switch (messageText) {
                 case START -> {
                     String userName = update.getMessage().getChat().getUserName();
