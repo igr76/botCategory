@@ -11,21 +11,16 @@ import org.springframework.stereotype.Service;
 
 
 /**  Сервис Категорий  */
-@NoArgsConstructor
+
 @AllArgsConstructor
 @Service
 public class CategoryServiceImpl implements CategoryService {
-    private Category category;
     private CategoryRepository categoryRepository;
 
-//    public CategoryServiceImpl(Category category, CategoryRepository categoryRepository) {
-//        this.category = category;
-//        this.categoryRepository = categoryRepository;
-//    }
 
     @Override
     public String getCategoryLevel(int level) {
-        return "";//String.join("\n", categoryRepository.findAllByParent(level));
+        return String.join("\n", categoryRepository.findAllByParent(level));
     }
 
     @Override
@@ -43,7 +38,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category category1 = new Category();
         category1.setParent(level);
-        category1.setSeq(maxSeq);
+        category1.setSeq(maxSeq++);
         category1.setName(name);
         categoryRepository.save(category1);
         return getCategoryLevel(level);
@@ -60,7 +55,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(int id, int level) {
-        Category category1 = categoryRepository.findByParentAndSeg(level, id);
+        Category category1 = categoryRepository.findByParentAndSeg(level, id).orElseThrow(ElemNotFound::new);
         if (category1 != null) {
             categoryRepository.delete(category1);
         }
@@ -69,7 +64,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public int newLevel(Integer level, int value) {
-        Category category1 = categoryRepository.findByParentAndSeg(level,value);
+        Category category1 = categoryRepository.findByParentAndSeg(level,value).orElseThrow(ElemNotFound::new);
         category1.setName(category1.getName() + " >");
         categoryRepository.save(category1);
         return category1.getId();
