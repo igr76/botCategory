@@ -9,4 +9,6 @@ public interface CategoryService {
     public void deleteCategory(int id,int level);
 
     public int newLevel(Integer level, int value);
+
+    String viewTree();
 }
