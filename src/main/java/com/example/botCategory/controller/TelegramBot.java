@@ -67,10 +67,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String userName = update.getMessage().getChat().getUserName();
                     startCommand(chatId, userName);
                 }
-                case GREAT -> greatCommand(chatId);
-                case GREAT_NEW -> greatNewCommand(chatId);
-                case GET -> getCommand(chatId);
-                case DELETE -> deleteCommand(chatId);
+                case ADD -> greatCommand(messageText);
+//                case GET -> getCommand(chatId);
+                case DELETE -> deleteCommand(messageText);
                 case HELP -> helpCommand(chatId);
                 case NEXT -> nextCommand(chatId);
                 case PREVIOUS -> previousCommand(chatId);
@@ -84,10 +83,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(chatId, categoryService.viewTree());
     }
 
-    private void getCommand(long chatId) {
-        sendMessage(chatId, categoryService.getCategoryLevel(level));
-
-    }
+//    private void getCommand(long chatId) {
+//        sendMessage(chatId, categoryService.getCategory(level));
+//
+//    }
 
     private void unknownCommand(Update update) {
         log.info("unknownCommand");
@@ -114,29 +113,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                 
                 Для этого воспользуйтесь командами:
                 /get - получить список категорий
-                /great - создать категорию
-                /greatNew - создать категорию в категории
-                /delete - удалить категорию
+                /addElement <название категории> - создать категорию
+                /addElement <родительский элемент> <дочерний элемент> - создать категорию в категории
+                (писать без пробелов категории)
+                /removeElement <название категории>  - удалить категорию
                 /next - перейти ниже
                 /previous - перейти выше
                 """;
         sendMessage(chatId, text);
     }
 
-    private void deleteCommand(long chatId) {
-        sendAnswerTextMessage(chatId,"Введите номер удаляемой  категории");
-        userService.saveUserLastAction(DELETE,chatId);
+    private void deleteCommand(String text) {
+        String textCommand = text.substring(12);
+        categoryService.deleteCategory(textCommand);
     }
 
-    private void greatNewCommand(long chatId) {
-        System.out.println(level);
-        sendAnswerTextMessage(chatId,"Введите номер расширяемой  категории");
-        userService.saveUserLastAction(GREAT_NEW,chatId);
+    private void greatNewCommand(String fatherCategory,String childrenCategory) {
+        categoryService.addTwo(fatherCategory,childrenCategory);
     }
 
-    private void greatCommand(long chatId) {
-        sendAnswerTextMessage(chatId,"Введите имя новой категории");
-        userService.saveUserLastAction(GREAT,chatId);
+    private void greatCommand(String text) {
+        String textCommand = text.substring(12);
+        String[] textArray = textCommand.split(" ");
+        if (textArray.length > 1) {greatNewCommand(textArray[0],textArray[1]);}
+        categoryService.addOne(textCommand);
     }
 
 
@@ -148,8 +148,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 
                 Для этого воспользуйтесь минимальными командами:
                 /get - получить список категорий
-                /great - создать категорию
-                /delete - удалить категорию
+                /addElement <название категории> - создать категорию
+                /removeElement <название элемента> - удалить категорию
                 
                 Дополнительные команды:
                 /help - получение справки обо всех командах
