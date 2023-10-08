@@ -10,4 +10,5 @@ public interface UserService {
     void saveUserLastAction(String action,long chatId);
 
     void setLevelUserState(long chatId, int level);
+
 }
