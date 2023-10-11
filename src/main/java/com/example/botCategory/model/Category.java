@@ -20,7 +20,7 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer id;
+    private int id;
     /**    номер родительского узла     */
     @Column(name = "parent")
     private int parent;
@@ -30,7 +30,5 @@ public class Category {
     /**    Имя узла     */
     @Column(name = "name")
     private String name;
-    /**    Содержание узла     */
-    @Column(name = "filling")
-    private String filling;
+
 }
