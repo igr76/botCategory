@@ -1,10 +1,6 @@
 package com.example.botCategory.controller;
 
-import com.example.botCategory.model.UserState;
 import com.example.botCategory.service.CategoryService;
-import com.example.botCategory.service.UserService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -25,13 +21,10 @@ import static com.example.botCategory.controller.AllText.*;
 public class TelegramBot extends TelegramLongPollingBot {
 
     private  UpdateController updateController;
-    private  UserService userService;
-    private  UserState userState;
     private CategoryService categoryService;
 
-    public TelegramBot(@Lazy UpdateController updateController, UserService userService, CategoryService categoryService) {
+    public TelegramBot(@Lazy UpdateController updateController, CategoryService categoryService) {
         this.updateController = updateController;
-        this.userService = userService;
         this.categoryService = categoryService;
     }
 
@@ -41,6 +34,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String botToken;
     public    String LAST_ACTION ;
     public    Integer level =1;
+ //   private  String[] textArray = new  String[5] ;
 
     @EventListener({ContextRefreshedEvent.class})
     public void init() throws TelegramApiException {
@@ -56,37 +50,31 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             // Set variables
-            String messageText = update.getMessage().getText();
+            String messageTextAfter = update.getMessage().getText();
+            String[] textArray = messageTextAfter.split(" ");
+            String messageText = textArray[0];
+            log.info(messageText );
             long chatId = update.getMessage().getChatId();
-            if (userService.getUserState(chatId) == null) {
-                level = 1; UserState userState = new UserState(); userState.setId(chatId);userState.setLevel(level);
-                userService.updateUserState(userState,chatId);
-            }else    level = userService.getLevelUserState(chatId);
             switch (messageText) {
                 case START -> {
                     String userName = update.getMessage().getChat().getUserName();
                     startCommand(chatId, userName);
                 }
-                case ADD -> greatCommand(messageText);
-//                case GET -> getCommand(chatId);
-                case DELETE -> deleteCommand(messageText);
+                case ADD -> greatCommand(textArray);
+       //         case GET -> getCommand(chatId);
+                case DELETE -> deleteCommand(chatId,textArray[1]);
                 case HELP -> helpCommand(chatId);
-                case NEXT -> nextCommand(chatId);
-                case PREVIOUS -> previousCommand(chatId);
                 case VIEW_TREE -> viewTreeCommand(chatId);
                 default -> unknownCommand(update);
             }
         }
     }
 
-    private void viewTreeCommand(long chatId) {
+
+    private void viewTreeCommand(long chatId) {log.info("viewTree");
         sendMessage(chatId, categoryService.viewTree());
     }
 
-//    private void getCommand(long chatId) {
-//        sendMessage(chatId, categoryService.getCategory(level));
-//
-//    }
 
     private void unknownCommand(Update update) {
         log.info("unknownCommand");
@@ -94,16 +82,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
            }
 
-    private void previousCommand(long chatId) {
-        if (level > 1) {
-            sendMessage(chatId, categoryService.getCategoryPreviousLevel(level));
-        }else sendMessage(chatId, "Выше нет уровня");
-    }
-
-    private void nextCommand(long chatId) {
-        sendAnswerTextMessage(chatId,"Введите номер  категории для перехода");
-        userService.saveUserLastAction(NEXT,chatId);
-    }
 
     private void helpCommand(long chatId) {
         var text = """
@@ -112,31 +90,31 @@ public class TelegramBot extends TelegramLongPollingBot {
                Здесь Вы сможете создавать и удалять категории товаров.
                 
                 Для этого воспользуйтесь командами:
-                /get - получить список категорий
+                /viewTree - получить список категорий
                 /addElement <название категории> - создать категорию
                 /addElement <родительский элемент> <дочерний элемент> - создать категорию в категории
                 (писать без пробелов категории)
                 /removeElement <название категории>  - удалить категорию
-                /next - перейти ниже
-                /previous - перейти выше
+             
                 """;
         sendMessage(chatId, text);
     }
 
-    private void deleteCommand(String text) {
-        String textCommand = text.substring(12);
-        categoryService.deleteCategory(textCommand);
+    private void deleteCommand(long chatId,String text) {
+        if (text == null) {    sendMessage(chatId, "введите удаляемый элемент");    }
+        categoryService.deleteCategory(text);
     }
 
-    private void greatNewCommand(String fatherCategory,String childrenCategory) {
+    private void greatTwoCommand(String fatherCategory,String childrenCategory) {
         categoryService.addTwo(fatherCategory,childrenCategory);
     }
 
-    private void greatCommand(String text) {
-        String textCommand = text.substring(12);
-        String[] textArray = textCommand.split(" ");
-        if (textArray.length > 1) {greatNewCommand(textArray[0],textArray[1]);}
-        categoryService.addOne(textCommand);
+    private void greatCommand(String[] text) {
+       // String textCommand = text.substring(12);
+        log.info("greatCommand" +text[1]);
+        if (text.length > 2) {greatTwoCommand(text[1],text[2]);
+        }else   categoryService.addOne(text[1]);
+
     }
 
 
@@ -147,7 +125,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 Здесь Вы сможете создавать и удалять категории товаров.
                 
                 Для этого воспользуйтесь минимальными командами:
-                /get - получить список категорий
+                /viewTree - получить список категорий
                 /addElement <название категории> - создать категорию
                 /removeElement <название элемента> - удалить категорию
                 
