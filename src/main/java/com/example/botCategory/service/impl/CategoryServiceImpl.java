@@ -5,8 +5,7 @@ import com.example.botCategory.exception.ElemNotFound;
 import com.example.botCategory.model.Category;
 import com.example.botCategory.repository.CategoryRepository;
 import com.example.botCategory.service.CategoryService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,14 +15,16 @@ import java.util.Set;
 
 
 /**  Сервис Категорий  */
-
+@Slf4j
 @Service
 public class CategoryServiceImpl implements CategoryService {
     private CategoryRepository categoryRepository;
-    private Set<Integer> u= new HashSet<>();
-    private char ch = ' ';
+  //  private Set<Integer> u= new HashSet<>(); // учет пройденных сущностей
+    private String ch = "|";
     private List<String> categoryStringList = new ArrayList<>();
     private List<Category> categoryListTime = new ArrayList<>();
+    private List<Category> categoryListDelete = new ArrayList<>();
+    private List<Category> listChildren = new ArrayList<>();
 
     public CategoryServiceImpl(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
@@ -39,31 +40,6 @@ public class CategoryServiceImpl implements CategoryService {
        return String.join("\n",categoryRepository.findPreviousLevel(level));
     }
 
-//    @Override
-//    public String greatCategory(int level, String name) {
-//        int maxSeq =1;
-//        try {
-//             maxSeq = categoryRepository.findByParentAndMaxSeg(level).orElseThrow(ElemNotFound::new);
-//        } catch (ElemNotFound e) {
-//        }
-//
-//        Category category1 = new Category();
-//        category1.setParent(level);
-//        category1.setSeq(maxSeq++);
-//        category1.setName(name);
-//        categoryRepository.save(category1);
-//        return getCategoryLevel(level);
-//    }
-//
-//    @Override
-//    public String greatNewCategory(int id, String name) {
-//        Category category1 = new Category();
-//        category1.setSeq(1);
-//        category1.setName(name);
-//        category1.setParent(id);
-//        return getCategoryLevel(id);
-//    }
-
     @Override
     public void deleteCategory(String textl) {
         try {
@@ -73,8 +49,8 @@ public class CategoryServiceImpl implements CategoryService {
             }else {
                 List<Category> categoryList = categoryRepository.findAll();
                 categoryListTime.clear();
-                treeCategory(categoryList,category1.getId());
-                for (Category e:categoryListTime) {
+                treeCategory(category1);
+                for (Category e:categoryListDelete) {
                     categoryRepository.delete(e);
                 }
             }
@@ -84,96 +60,105 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public int newLevel(Integer level, int value) {
-        Category category1 = categoryRepository.findByParentAndSeg(level,value).orElseThrow(ElemNotFound::new);
-        category1.setName(category1.getName() + " >");
-        categoryRepository.save(category1);
-        return category1.getId();
-    }
-
-    @Override
     public String viewTree() {
         categoryStringList.clear();
         int l=0;
-        List<Category> categoryList = categoryRepository.findAll();
-        for (int i = 0; i < categoryList.size()-1; i++) {
-           if (1==0){tree(categoryList,l);}
+        categoryListTime = categoryRepository.findAll();
+        log.info("public String viewTree");
 
-           if (u.contains(i)) { break; }else tree(categoryList,i);
-        }
+        getTree(categoryListTime.get(0));
         return String.join("\n",categoryStringList);
     }
 
     @Override
     public void addTwo( String fatherCategory, String childrenCategory) {
+        int maxSeg;
         Category fatherCategory1 = categoryRepository.findByNname(fatherCategory).orElseThrow(ElemNotFound::new);
-        int maxSeg = categoryRepository.findByParentAndMaxSeg(fatherCategory1.getId()).orElseThrow(ElemNotFound::new);
+        log.info(String.valueOf(fatherCategory1)+ "addTwo fatherCategory1");
+        try {
+             maxSeg = categoryRepository.findByParentAndMaxSeg(fatherCategory1.getId()).orElseThrow(ElemNotFound::new);
+        } catch (ElemNotFound elemNotFound) {
+             maxSeg =0;
+        }
+        Category last = categoryRepository.findLastElement().orElseThrow(ElemNotFound::new);
         Category category = new Category();
+        category.setId(last.getId()+1);
         category.setName(childrenCategory);
-        category.setParent(fatherCategory1.getParent());
+        category.setParent(fatherCategory1.getId());
         category.setSeq(maxSeg+1);
+        log.info(String.valueOf(category)+ "addTwo");
         categoryRepository.save(category);
     }
 
     @Override
     public void addOne( String textCommand) {
+        log.info("void addOne");
         Category category = new Category();
         try {
             Category last = categoryRepository.findLastElement().orElseThrow(ElemNotFound::new);
+            category.setId(last.getId()+1);
             category.setName(textCommand);
-            category.setParent(last.getParent());
+            if (last.getParent() == 0) {category.setParent(1);
+                log.info(String.valueOf(category.getParent()));
+            }else category.setParent(last.getParent());
             category.setSeq(last.getSeq()+1);
+            log.info(String.valueOf(category));
         } catch (ElemNotFound e) {
+            category.setId(1);
             category.setName(textCommand);
             category.setParent(0);
             category.setSeq(0);
         }
        categoryRepository.save(category);
+        log.info("addOne  save");
     }
 
-    void tree(List<Category> e,int l) {
-        for (int m = 0; m <e.size()-1; m++) {
-            if (e.get(m).getParent() == e.get(l).getId()) {
-                l=e.get(m).getId();
-                ch +=ch;
-               categoryStringList.add(ch+e.get(l).getName());
-                u.add(l);
-            }
-
+    void getTree(Category category) {
+        categoryStringList.add(ch+category.getName());
+        for (Category e :
+                categoryListTime) {
+            if (category.getId() == e.getParent()) {listChildren.add(e);}
         }
-        backTree(e,l);
-    }
-
-    void backTree(List<Category> e,int l) {
-        while (l <= 1) {
-            for (int i = 0; i < e.size()-1; i++) {
-                if (e.get(i).getParent() == l) {
-                    categoryStringList.add(ch+e.get(l).getName());
-                    u.add(l);
-                }
+        if (listChildren == null) {return;}
+        log.info("listChildren est");
+        for (Category e :
+                listChildren) {
+            log.info(e.getName());
+            if (checkChildren(e.getId())) {
+                listChildren.clear();ch +=ch;
+                log.info("recursive");
+                getTree(e);
             }
-            ch-=ch; l=e.get(l).getParent();
+            categoryStringList.add(ch+e.getName());
         }
     }
-    void treeCategory(List<Category> e,int l) {
-        for (int m = 0; m <e.size()-1; m++) {
-            if (e.get(m).getParent() == e.get(l).getId()) {
-                l=e.get(m).getId();
-                categoryListTime.add(e.get(l));
-            }
 
+    boolean checkChildren(int id) {
+        for (Category e :
+                categoryListTime) {
+            if (e.getParent() == id) { log.info("true");return true;}
         }
-        backTree(e,l);
+        log.info("false");
+        return false;
+    }
+    void treeCategory(Category category) {
+        categoryListDelete.add(category);
+        for (Category e :
+                categoryListTime) {
+            if (category.getId() == e.getParent()) {listChildren.add(e);}
+        }
+        if (listChildren == null) {return;}
+        log.info("listChildren est");
+        for (Category e :
+                listChildren) {
+            log.info(e.getName());
+            if (checkChildren(e.getId())) {
+                listChildren.clear();ch +=ch;
+                log.info("recursive");
+                treeCategory(e);
+            }
+            categoryListDelete.add(e);
+        }
     }
 
-    void backTreeCategory(List<Category> e,int l) {
-        while (l <= 1) {
-            for (int i = 0; i < e.size()-1; i++) {
-                if (e.get(i).getParent() == l) {
-                    categoryListTime.add(e.get(l));
-                }
-            }
-             l=e.get(l).getParent();
-        }
-    }
 }
